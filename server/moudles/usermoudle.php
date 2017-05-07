@@ -6,8 +6,10 @@ class UserMoudle{
 		if ($data->password==null || $data->password=='') return 'please enter password';
 		if ($data->email==null || $data->email=='') return 'please enter email';		
 		if ($data->userImage==null || $data->userImage=='') $data->userImage='0000';		
+		$password = sha1($data->password);
+		$passwordTaken = $this->checkIFPasswordIsTaken($password); 
+		if($passwordTaken) return array("error"=>"this password is taken");
 		global $db;
-		$password = sha1($data->password); 
 		//ad user to DB
 		$row= $db->smartQuery(array(
 		'sql' => "INSERT INTO `users` (`nickName`, `password`, `userImage`, `email`, `userType`) VALUES (:nickName, :password, :userImage,:email,:userType);",
@@ -42,7 +44,7 @@ class UserMoudle{
 			'ret' => 'fetch-assoc'));	
 			if ($row!=false)
 			{
-				if ($row['verified'] == false) return array ("error"=>"please verifiy password","userId"=>$row['userId']);
+				if ($row['verified'] == false) return array ("error"=>"please verify password","userId"=>$row['userId']);
 				$token=(uniqid(rand(),true));
 				$token = str_replace('.','', $token);
 				$row['token']= $token;			  
@@ -64,12 +66,18 @@ class UserMoudle{
 	}	
 	
 	public function logOut ($data){
-		global $db;
-		$row = $db->smartQuery(array(
-		'sql' => "UPDATE `users` SET `token`=:token WHERE userId =:userId;",
-		'par' => array('token'=>'00','userId'=>$data->userId),
-		'ret' => 'result' ));		
-		if ($row==true) return array("message"=>"see you next time");		
+		if($dat->token != 'anonymous')
+		  {
+			global $db;
+			$row = $db->smartQuery(array(
+			'sql' => "UPDATE `users` SET `token`=:token WHERE userId =:userId;",
+			'par' => array('token'=>'00','userId'=>$data->userId),
+			'ret' => 'result' ));		
+			if ($row==true) return array("message"=>"see you next time");		  
+		  } else{
+			      return array("message"=>"see you next time");
+		        }
+		
 	}
 	
 	public function editUserData($data){
@@ -105,6 +113,7 @@ class UserMoudle{
 	}
 	
 	public function verifyCode($userId,$verificationCode){
+	//	return $verificationCode;
 		global $db;
 		$row= $db->smartQuery(array(
 		'sql' => "SELECT * FROM users where userId=:userId and verifyCode=:verifyCode",
@@ -139,7 +148,15 @@ class UserMoudle{
 					
 	}
 	
-	
+	public function checkIFPasswordIsTaken($password){
+	    global $db;	
+		$row = $db->smartQuery(array(
+		'sql' => "SELECT * FROM users where password=:password",
+		'par' => array('password' => $password),
+		'ret' => 'fetch-assoc'));	//result /fetch-assoc
+		if($row!=false) return true;
+		else return false;
+	}
 	
 	
 	
