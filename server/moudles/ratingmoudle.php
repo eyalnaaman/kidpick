@@ -10,13 +10,18 @@ class RatingMoudle{
 		'ret' => 'result'));
 		if($row =='true')
 		   {
-			   $row= $db->smartQuery(array('sql' => "SELECT * FROM ratings where `userId`=".$data->userId,
-			                               'par' => array(),
-										   'ret' => 'all'));
-                return array("ratings"=> sizeof($row));										   
+	        $userRatings = $this->getUserRatings($data->userId);
+			return array("userRatings"=> sizeof($userRatings));										   
 		   }else return array('error'=>'an error has occurred'); 			   
 	}
 	
+	public function getUserRatings($userId){
+	    global $db;
+		$row= $db->smartQuery(array('sql' => "SELECT * FROM ratings where `userId`=".$userId,
+								   'par' => array(),
+								   'ret' => 'all'));
+		return $row;			
+		}	
 }
 
 ?>

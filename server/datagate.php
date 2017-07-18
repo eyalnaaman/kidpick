@@ -15,7 +15,6 @@ $RatingMoudle = new RatingMoudle();
 $type=isset($_GET["type"])?$_GET["type"]:null;
 $data = json_decode(file_get_contents("php://input"));
 if(!$data) $data=(object)array();
-
 if(isset($data->userId))
    {
 	 $userData = $UserMoudle->getUserById($data);  
@@ -28,8 +27,8 @@ if(isset($data->userId))
 switch($type)
  {
 	                   //////usermoudle/////
-	case "adUser":
-		$ret = $UserMoudle->adUser($data);
+	case "addUser":
+		$ret = $UserMoudle->addUser($data);
 	break;
 	case "verifyCode":
 		$ret = $UserMoudle->verifyCode($data->userId,$data->verificationCode); 
@@ -53,6 +52,11 @@ switch($type)
 		else $ret = $UserMoudle->getUserById($data);   
 	break;
 	                    //////businessmoudle/////
+	case "getDistance": 
+	    if ($UserMoudle->isLogin($data) == false ) $ret =  array("error" => "not login");
+		else $ret = $BusinessMoudle->getDistance($data->lat, $data->lon, $data->lat_temp, $data->lon_temp, 'K');   
+	break;						
+						
 	case "addBusiness": 
 	    if ($UserMoudle->isLogin($data) == false ) $ret =  array("error" => "not login");
 		else $ret = $BusinessMoudle->addBusiness($data);   
@@ -63,8 +67,14 @@ switch($type)
 	break;		
 	case "getBusinesses": 
 	    if ($UserMoudle->isLogin($data) == false ) $ret =  array("error" => "not login");
-		else $ret = $BusinessMoudle->getBusinesses($data);   
+		else $ret = $BusinessMoudle->getBusinesses();   
 	break;
+	case "getBusinessesNearby": 
+	    if ($UserMoudle->isLogin($data) == false ) $ret =  array("error" => "not login");
+		else $ret = $BusinessMoudle->getBusinessesNearby($data);   
+	break;	
+	
+	
 	case "deleteBusiness": 
 	    if ($UserMoudle->isLogin($data) == false ) $ret =  array("error" => "not login");
 		else $ret = $BusinessMoudle->deleteBusiness($data);   

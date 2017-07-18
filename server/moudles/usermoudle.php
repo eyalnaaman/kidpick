@@ -1,14 +1,13 @@
 <?php
 class UserMoudle{
 
-    public function adUser($data){		
+    public function addUser($data){		
         if ($data->nickName==null || $data->nickName=='') return 'please enter nickName';		
 		if ($data->password==null || $data->password=='') return 'please enter password';
-		if ($data->email==null || $data->email=='') return 'please enter email';		
+		if ($data->email==null || $data->email=='') return 'please enter email';
+		if($this->checkIFNickNameIsTaken($data->nickName)) return array("error"=>"this nickName is taken");		
 		if ($data->userImage==null || $data->userImage=='') $data->userImage='0000';		
 		$password = sha1($data->password);
-		$passwordTaken = $this->checkIFPasswordIsTaken($password); 
-		if($passwordTaken) return array("error"=>"this password is taken");
 		global $db;
 		//ad user to DB
 		$row= $db->smartQuery(array(
@@ -18,12 +17,12 @@ class UserMoudle{
 		if($row =='true')
 		  { //get user id
 	        $row= $db->smartQuery(array(
-			'sql' => "SELECT * FROM users where email=:email and password=:password",
-			'par' => array('email'=>$data->email,'password' => $password),
+			'sql' => "SELECT * FROM users where nickName=:nickName and password=:password",
+			'par' => array('nickName'=>$data->nickName,'password' => $password),
 			'ret' => 'fetch-assoc'));	
             //ad verification code to users row (by id)
 			$userId = $row['userId'];
-	        $verifyCode = rand (1000,9999);
+	        $verifyCode = rand (1001,9999);
 			$row = $db->smartQuery(array(
 			'sql' => "UPDATE `users` SET `verifyCode`=:verifyCode WHERE userId =:userId;",
 			'par' => array('verifyCode'=>$verifyCode,'userId'=>$userId),
@@ -34,13 +33,14 @@ class UserMoudle{
 	}
 	
 	public function login($data){
-		if ($data->password==null || $data->password=='' || $data->email==null || $data->email=='') return array("error"=>"please submit email and password");		
+		if ($data->password==null || $data->password=='' || $data->nickName==null || $data->nickName=='') return array("error"=>"please submit nickName and password");		
 		global $db;
+		global $RatingMoudle;
 		$password = sha1($data->password);
 		// get user data from DB
 		$row= $db->smartQuery(array(
-			'sql' => "SELECT * FROM users where email=:email and password=:password",
-			'par' => array('password' => $password, 'email' => $data->email),
+			'sql' => "SELECT * FROM users where nickName=:nickName and password=:password",
+			'par' => array('password' => $password, 'nickName' => $data->nickName),
 			'ret' => 'fetch-assoc'));	
 			if ($row!=false)
 			{
@@ -48,9 +48,11 @@ class UserMoudle{
 				$token=(uniqid(rand(),true));
 				$token = str_replace('.','', $token);
 				$row['token']= $token;			  
-				$this->writeTokenToUsersData($row['userId'],$token,false);
+				$this->writeTokenToUsersRow($row['userId'],$token,false);
+				$userRatings = $RatingMoudle->getUserRatings($row['userId']);
+				$row['userRatings'] = sizeof($userRatings);
 				return $row;								
-			}else return array ("error"=>"wrong email or password"); 
+			}else return array ("error"=>"wrong nickName or password"); 
 			
 	}
 	
@@ -81,11 +83,12 @@ class UserMoudle{
 	}
 	
 	public function editUserData($data){
-	    if ($data->UPuserImage==null || $data->UPuserImage=='') $data->UPuserImage=$data->userImage;		
+	    if ($data->UPuserImage==null || $data->UPuserImage=='') $data->UPuserImage = $data->userImage;	
+		if($this->checkIFNickNameIsTaken($data->UPnickname)) return array("error"=>"this nickName is taken");
 		global $db; 
 		$row= $db->smartQuery(array(
 		'sql' => "UPDATE `users` SET `nickName`=:nickName,`userImage`=:userImage ,`email`=:email WHERE userId =:userId;",
-		'par' => array('nickName'=>$data->UPnickName,'userImage'=>$data->UPuserImage,'email'=>$data->UPemail,'userId'=>$data->userId),
+		'par' => array('nickName'=>$data->UPnickname,'userImage'=>$data->UPuserImage,'email'=>$data->UPemail,'userId'=>$data->userId),
 		'ret' => 'result' ));
 		if($row =='true')return array("message"=>"success");
 		else return array('error'=>'an error has occurred'); 
@@ -99,21 +102,21 @@ class UserMoudle{
 	    $ratings= $db->smartQuery(array('sql' => "SELECT * FROM ratings where `userId`=".$data->userId,
 						   'par' => array(),
 						   'ret' => 'all'));
-      $ratings['numberOfRatings']= sizeof($ratings);	
+        $ratings['numberOfRatings']= sizeof($ratings);	
 	
         $row[0]['ratings'] = $ratings;	
         return $row;		
 	}
 	
 	public function sendVerificationMail($email,$verifyCode,$nickName){
-		$msg = "hi ".$nickName." your kidpick verification code is: ".$verifyCode;
+		$msg = "hi ".$nickName.", your kidpick verification code is: ".$verifyCode;
 		$subject = "kidpick verification code";
 		$from = "from: kidpick";
 		mail($email,$subject,$msg,$from);	
 	}
 	
 	public function verifyCode($userId,$verificationCode){
-	//	return $verificationCode;
+		//return $verificationCode."---".$userId;
 		global $db;
 		$row= $db->smartQuery(array(
 		'sql' => "SELECT * FROM users where userId=:userId and verifyCode=:verifyCode",
@@ -124,13 +127,13 @@ class UserMoudle{
 			$token=(uniqid(rand(),true));
 			$token = str_replace('.','', $token);
 			$row['token']= $token;			  
-			$this->writeTokenToUsersData($row['userId'],$token,true);
+			$this->writeTokenToUsersRow($row['userId'],$token,true);
             return $row;			
 		  }
 		  else return array ("error"=>"wrong verification code");
 	}
 	
-	public function writeTokenToUsersData($userId,$token,$isVerification){
+	public function writeTokenToUsersRow($userId,$token,$isVerification){
 		if($isVerification)
 		  {
 			global $db;
@@ -148,11 +151,11 @@ class UserMoudle{
 					
 	}
 	
-	public function checkIFPasswordIsTaken($password){
+	public function checkIFNickNameIsTaken($nickName){
 	    global $db;	
 		$row = $db->smartQuery(array(
-		'sql' => "SELECT * FROM users where password=:password",
-		'par' => array('password' => $password),
+		'sql' => "SELECT * FROM users where nickName=:nickName",
+		'par' => array('nickName' => $nickName),
 		'ret' => 'fetch-assoc'));	//result /fetch-assoc
 		if($row!=false) return true;
 		else return false;
@@ -164,10 +167,12 @@ class UserMoudle{
 	
 	
 	
-	
-	
+/////////////////////////////////////////////////////////////////	
+////////////////////////testing zone/////////////////////////////
+/////////////////////////////////////////////////////////////////
 	
 	public function test(){
+		print_r('hh');
 		return 'eyal';
 		$to = "neyal@cambium.co.il";
 		$subject = "kidpick verification code";
