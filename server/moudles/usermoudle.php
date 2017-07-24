@@ -50,7 +50,7 @@ class UserMoudle{
 				$row['token']= $token;			  
 				$this->writeTokenToUsersRow($row['userId'],$token,false);
 				$userRatings = $RatingMoudle->getUserRatings($row['userId']);
-				$row['userRatings'] = sizeof($userRatings);
+				$row['userRatings'] =  (string) sizeof($userRatings);
 				return $row;								
 			}else return array ("error"=>"wrong nickName or password"); 
 			
