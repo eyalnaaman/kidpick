@@ -73,8 +73,6 @@ switch($type)
 	    if ($UserMoudle->isLogin($data) == false ) $ret =  array("error" => "not login");
 		else $ret = $BusinessMoudle->getBusinessesNearby($data);   
 	break;	
-	
-	
 	case "deleteBusiness": 
 	    if ($UserMoudle->isLogin($data) == false ) $ret =  array("error" => "not login");
 		else $ret = $BusinessMoudle->deleteBusiness($data);   

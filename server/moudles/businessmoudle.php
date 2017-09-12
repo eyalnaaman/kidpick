@@ -54,8 +54,8 @@ class BusinessMoudle{
 	}
 
 	public function getBusinessesNearby($data){
-	   $radius = 0.6;
-//$radius = 1000000;
+	  // $radius = 0.6;
+       $radius = 10000000;
 	   $businessNearby = array();
 	   $lat = $data->lat;
 	   $lon = $data->lon;
