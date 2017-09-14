@@ -70,7 +70,7 @@ class BusinessMoudle{
 		return $businessNearby;
 		}
 		
-	function getBusinessLocation($bId){
+	function getBusinessById($bId){
 		global $db;
 		$row= $db->smartQuery(array('sql' => "SELECT * FROM businesses WHERE businessId=:businessId",
 		                            'par' => array('businessId'=>$bId),
@@ -78,8 +78,7 @@ class BusinessMoudle{
         return $row;	
 		
 		}
-		
-		
+				
 	function getDistance($lat1, $lon1, $lat2, $lon2, $unit) {
 	  $theta = $lon1 - $lon2;
 	  $dist = sin(deg2rad($lat1)) * sin(deg2rad($lat2)) +  cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * cos(deg2rad($theta));

@@ -21,7 +21,9 @@ if(isset($data->userId))
 	 $data->userType =$userData[0]['userType'];	   
 	 $data->nickName =$userData[0]['nickName'];	   
 	 $data->email =$userData[0]['email'];	   
-	 $data->userImage =$userData[0]['userImage'];	   
+	 $data->userImage = $userData[0]['userImage'];
+	 $data->bonus = json_decode($userData[0]['bonus']);
+	 $data->bonusListData =  $UserMoudle->getBonusListData($data);
    }else $data->userId=0;
 
 switch($type)
@@ -34,7 +36,7 @@ switch($type)
 		$ret = $UserMoudle->verifyCode($data->userId,$data->verificationCode); 
 	break;
 	case "login":
-		$ret = $UserMoudle->login($data);   
+		$ret = $UserMoudle->login($data);
 	break;	
 	case "isLogin":
 		$ret = $UserMoudle->isLogin($data);   
@@ -51,6 +53,13 @@ switch($type)
 	    if ($UserMoudle->isLogin($data) == false ) $ret =  array("error" => "not login");
 		else $ret = $UserMoudle->getUserById($data);   
 	break;
+	case "getBonusListData": 
+	    if ($UserMoudle->isLogin($data) == false ) $ret =  array("error" => "not login");
+		else $ret = $UserMoudle->getBonusListData($data);   
+	break;	
+	case "forgotPassword": 
+		 $ret = $UserMoudle->forgotPassword($data);   
+	break;	
 	                    //////businessmoudle/////
 	case "getDistance": 
 	    if ($UserMoudle->isLogin($data) == false ) $ret =  array("error" => "not login");
@@ -82,7 +91,10 @@ switch($type)
 	    if ($UserMoudle->isLogin($data) == false ) $ret =  array("error" => "not login");
 		else $ret = $RatingMoudle->addRating($data);   
 	break;					  
-					  
+	case "deleteBonusFromDB": 
+	    if ($UserMoudle->isLogin($data) == false ) $ret =  array("error" => "not login");
+		else $ret = $RatingMoudle->deleteBonusFromDB($data);   
+	break;					  
 					  
 					  
 	case "test":
